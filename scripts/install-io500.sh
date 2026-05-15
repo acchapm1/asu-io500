@@ -59,7 +59,30 @@ echo "mpicc:      $(command -v mpicc)"
 mpicc --version | head -n1
 echo "autoconf:   $ac_ver"
 echo "autoreconf: $(command -v autoreconf)"
+
+# pkg.m4 (PKG_CHECK_MODULES) ships with pkg-config at /usr/share/aclocal/
+# on this cluster, but loading the automake module replaces aclocal's search
+# path with /packages/apps/automake/.../share/aclocal/ and drops the system
+# dir. IOR's configure.ac uses PKG_CHECK_MODULES for the CHFS/FINCHFS
+# backends; without pkg.m4 those macros pass through unexpanded and the
+# nested AC_DEFINE/AC_SUBST trip autoconf's m4_pattern_forbid check
+# ("undefined or overquoted macro: AC_DEFINE"). Re-include the system dir.
+ACLOCAL_EXTRA_DIR="${ACLOCAL_EXTRA_DIR:-/usr/share/aclocal}"
+if [[ -d "$ACLOCAL_EXTRA_DIR" ]]; then
+  export ACLOCAL_PATH="$ACLOCAL_EXTRA_DIR${ACLOCAL_PATH:+:$ACLOCAL_PATH}"
+  echo "ACLOCAL_PATH: $ACLOCAL_PATH"
+else
+  echo "WARNING: $ACLOCAL_EXTRA_DIR not found; PKG_CHECK_MODULES may fail" >&2
+fi
 echo
+
+# Wipe stale autotools state from any prior failed run so autoreconf -f
+# regenerates cleanly. prepare.sh keeps the IOR clone but will re-bootstrap.
+if [[ -d "$IO500_DIR/build/ior" ]]; then
+  rm -rf "$IO500_DIR/build/ior/autom4te.cache" \
+         "$IO500_DIR/build/ior/aclocal.m4" \
+         "$IO500_DIR/build/ior/configure" 2>/dev/null || true
+fi
 
 cd "$IO500_DIR"
 

@@ -76,6 +76,12 @@ cd /home/acchapm1/io/io500
 - **`autoreconf: ... error: Autoconf version 2.71 or higher is required`** —
   the toolchain modules didn't load. Confirm `autoconf/2.72` (or your site's
   equivalent) is in `module avail` output and adjust `TOOLCHAIN_MODULES`.
+- **`configure.ac:NNN: error: undefined or overquoted macro: AC_DEFINE` (or
+  `AC_SUBST`)** — `pkg.m4` (the file that defines `PKG_CHECK_MODULES`) isn't
+  on aclocal's search path. The install script prepends `/usr/share/aclocal`
+  to `ACLOCAL_PATH` to fix this; if your site keeps `pkg.m4` somewhere else,
+  set `ACLOCAL_EXTRA_DIR=/path/to/aclocal` before running the script. Find
+  it with `find / -name pkg.m4 2>/dev/null`.
 - **`prepare.sh` clone fails with SSL** — head node has no internet. Run
   install from a node that does, or pre-populate `io500/build/{ior,pfind,cdcl-schema-tools}`.
 - **Stale build after pulling new io500 commits** — `cd /home/acchapm1/io/io500 && make clean && bash scripts/install-io500.sh`.
