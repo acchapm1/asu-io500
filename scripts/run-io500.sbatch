@@ -2,10 +2,11 @@
 #SBATCH --job-name=io500
 #SBATCH --output=%x-%j.out
 #SBATCH --error=%x-%j.err
-#SBATCH --partition=public
+#SBATCH --partition=htc
 #SBATCH --qos=public
 #SBATCH --nodes=2
 #SBATCH --ntasks-per-node=8
+#SBATCH -c 2
 #SBATCH --time=01:00:00
 ##SBATCH --exclusive
 #

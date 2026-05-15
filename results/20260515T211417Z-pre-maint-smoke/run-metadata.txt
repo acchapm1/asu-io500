@@ -1,0 +1,11 @@
+=== run metadata ===
+timestamp_utc: 20260515T211417Z
+label:         pre-maint-smoke
+config:        /home/acchapm1/io/asu-io500/configs/config-minimal.ini
+io500_bin:     /home/acchapm1/io/io500/io500
+host:          sc091
+slurm_job_id:  52911619
+slurm_nodelist: sc[091-092]
+slurm_ntasks:  16
+slurm_ntasks_per_node: 8
+slurm_nnodes:  2
