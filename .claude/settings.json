@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/acchapm1/io/asu-io500/.claude/auto-push.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

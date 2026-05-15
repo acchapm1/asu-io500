@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+#SBATCH --job-name=io500
+#SBATCH --output=%x-%j.out
+#SBATCH --error=%x-%j.err
+#
+# === FILL THESE IN BEFORE SUBMITTING ===
+##SBATCH --partition=REPLACE_PARTITION
+##SBATCH --nodes=2
+##SBATCH --ntasks-per-node=8
+##SBATCH --time=01:00:00
+##SBATCH --exclusive
+#
+# Usage:
+#   sbatch scripts/run-io500.sbatch <config.ini> <label>
+#
+# Examples:
+#   sbatch scripts/run-io500.sbatch configs/config-minimal.ini pre-maint-smoke
+#   sbatch scripts/run-io500.sbatch configs/asu-beegfs.ini pre-maint
+#
+# What this does:
+#   1. Loads openmpi/5.0.8.
+#   2. Creates results/<UTC-ts>-<label>/ in this repo and snapshots provenance
+#      (module list, lscpu, BeeGFS info, the config).
+#   3. Runs io500 via mpirun across the SLURM allocation.
+#   4. Copies io500's own results directory (timestamped) into results/<...>/
+#      so result.txt + result_summary.txt are committed to git.
+
+set -euo pipefail
+
+CONFIG="${1:-}"
+LABEL="${2:-run}"
+
+if [[ -z "$CONFIG" || ! -s "$CONFIG" ]]; then
+  echo "ERROR: pass a config file as arg 1, e.g.:" >&2
+  echo "  sbatch $0 configs/config-minimal.ini pre-maint-smoke" >&2
+  exit 2
+fi
+
+REPO_DIR="${REPO_DIR:-/home/acchapm1/io/asu-io500}"
+IO500_DIR="${IO500_DIR:-/home/acchapm1/io/io500}"
+IO500_BIN="$IO500_DIR/io500"
+MPI_MODULE="${MPI_MODULE:-openmpi/5.0.8}"
+
+if [[ ! -x "$IO500_BIN" ]]; then
+  echo "ERROR: $IO500_BIN not built. Run scripts/install-io500.sh first." >&2
+  exit 1
+fi
+
+# Resolve config to absolute path so cwd changes don't break it.
+CONFIG_ABS="$(readlink -f -- "$CONFIG")"
+
+# Per-run output dir inside the repo.
+TS="$(date -u +%Y%m%dT%H%M%SZ)"
+RUN_DIR="$REPO_DIR/results/${TS}-${LABEL}"
+mkdir -p "$RUN_DIR"
+
+# Load MPI.
+if ! command -v module >/dev/null 2>&1; then
+  for init in /etc/profile.d/lmod.sh /etc/profile.d/modules.sh /usr/share/lmod/lmod/init/bash; do
+    [[ -r "$init" ]] && source "$init" && break
+  done
+fi
+module purge
+module load "$MPI_MODULE"
+
+# Provenance snapshot (best-effort).
+{
+  echo "=== run metadata ==="
+  echo "timestamp_utc: $TS"
+  echo "label:         $LABEL"
+  echo "config:        $CONFIG_ABS"
+  echo "io500_bin:     $IO500_BIN"
+  echo "host:          $(hostname)"
+  echo "slurm_job_id:  ${SLURM_JOB_ID:-N/A}"
+  echo "slurm_nodelist: ${SLURM_JOB_NODELIST:-N/A}"
+  echo "slurm_ntasks:  ${SLURM_NTASKS:-N/A}"
+  echo "slurm_ntasks_per_node: ${SLURM_NTASKS_PER_NODE:-N/A}"
+  echo "slurm_nnodes:  ${SLURM_NNODES:-N/A}"
+} > "$RUN_DIR/run-metadata.txt"
+
+cp -- "$CONFIG_ABS" "$RUN_DIR/config-used.ini"
+
+{ module list; } >"$RUN_DIR/module-list.txt" 2>&1 || true
+lscpu                 >"$RUN_DIR/lscpu.txt"        2>&1 || true
+uname -a              >"$RUN_DIR/uname.txt"        2>&1 || true
+df -hT /scratch/acchapm1/io >"$RUN_DIR/df.txt"     2>&1 || true
+mount | grep -i beegfs     >"$RUN_DIR/mount-beegfs.txt" 2>&1 || true
+beegfs-ctl --listtargets   >"$RUN_DIR/beegfs-targets.txt" 2>&1 || true
+beegfs-net                 >"$RUN_DIR/beegfs-net.txt"     2>&1 || true
+
+# Launch. io500 must run from its own dir so relative paths to bin/ resolve.
+NTASKS="${SLURM_NTASKS:-2}"
+echo "=== launching: mpirun -np $NTASKS $IO500_BIN $CONFIG_ABS ==="
+
+cd "$IO500_DIR"
+mpirun -np "$NTASKS" "$IO500_BIN" "$CONFIG_ABS" \
+  2> >(tee "$RUN_DIR/io500.stderr" >&2) \
+  | tee "$RUN_DIR/io500.stdout"
+
+# Copy io500's results dir (the latest one) into the repo run dir.
+LATEST_RESULT="$(ls -1dt "$IO500_DIR"/results/*/ 2>/dev/null | head -n1 || true)"
+if [[ -n "$LATEST_RESULT" ]]; then
+  cp -r -- "$LATEST_RESULT"/* "$RUN_DIR/"
+  echo "Copied $LATEST_RESULT -> $RUN_DIR/"
+else
+  echo "WARNING: no results dir found under $IO500_DIR/results" >&2
+fi
+
+echo
+echo "=== run complete ==="
+echo "Output: $RUN_DIR"
+ls -la "$RUN_DIR"

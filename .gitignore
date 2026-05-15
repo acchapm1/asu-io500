@@ -1,0 +1,16 @@
+# Hook bookkeeping
+.claude/auto-push.log
+
+# Per-run artifacts we don't want in git
+results/*/raw/
+results/*/*.tmp
+*.log.tmp
+
+# SLURM stdout/stderr at repo root if you launch from here
+io500-*.out
+io500-*.err
+
+# Editor
+*.swp
+*.swo
+.DS_Store
