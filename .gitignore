@@ -14,3 +14,8 @@ io500-*.err
 *.swp
 *.swo
 .DS_Store
+
+# dev stuff
+output.log
+modules
+

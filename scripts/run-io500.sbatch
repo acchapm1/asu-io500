@@ -2,12 +2,11 @@
 #SBATCH --job-name=io500
 #SBATCH --output=%x-%j.out
 #SBATCH --error=%x-%j.err
-#
-# === FILL THESE IN BEFORE SUBMITTING ===
-##SBATCH --partition=REPLACE_PARTITION
-##SBATCH --nodes=2
-##SBATCH --ntasks-per-node=8
-##SBATCH --time=01:00:00
+#SBATCH --partition=public
+#SBATCH --qos=public
+#SBATCH --nodes=2
+#SBATCH --ntasks-per-node=8
+#SBATCH --time=01:00:00
 ##SBATCH --exclusive
 #
 # Usage:

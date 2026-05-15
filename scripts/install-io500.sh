@@ -15,7 +15,7 @@ MPI_MODULE="${MPI_MODULE:-openmpi/5.0.8}"
 # /usr/bin/autoconf on this cluster is older, so we must load the toolchain
 # modules explicitly (module purge below wipes the user's environment first).
 # Override TOOLCHAIN_MODULES if your site uses different module names.
-TOOLCHAIN_MODULES="${TOOLCHAIN_MODULES:-autoconf/2.72 automake/1.17 libtool/2.4.7 make/4.4.1}"
+TOOLCHAIN_MODULES="${TOOLCHAIN_MODULES:-autoconf/2.73 automake/1.17 libtool/2.4.7 make/4.4.1}"
 
 echo "=== io500 install ==="
 echo "io500 source     : $IO500_DIR"
