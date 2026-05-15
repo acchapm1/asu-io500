@@ -6,9 +6,18 @@ know what to do when it fails.
 ## Prerequisites
 
 - `module` (Lmod or environment-modules) on PATH
-- `openmpi/5.0.8` available as a module
-- `git`, `make`, `autoconf`, `automake`, `libtool` (for IOR's `./bootstrap`)
+- The following cluster modules:
+  - `openmpi/5.0.8`
+  - `autoconf/2.72` (IOR's `configure.ac` requires autoconf ≥ 2.71; the
+    system `/usr/bin/autoconf` is older)
+  - `automake/1.17`
+  - `libtool/2.4.7`
+  - `make/4.4.1`
+- `git` on PATH (system git is fine)
 - Write access to `/home/acchapm1/io/io500`
+
+The install script loads all of these for you via `module purge && module load
+...`; you don't need to load them in your shell first.
 
 ## What the script does
 
@@ -31,12 +40,16 @@ bash /home/acchapm1/io/asu-io500/scripts/install-io500.sh
 Re-running is safe — `prepare.sh` skips cloned repos and `make` rebuilds only
 what changed.
 
-## Override the MPI stack
+## Override the MPI stack or build toolchain
 
-The script defaults to `openmpi/5.0.8`. To test against a different stack:
+The script defaults to `MPI_MODULE=openmpi/5.0.8` and
+`TOOLCHAIN_MODULES="autoconf/2.72 automake/1.17 libtool/2.4.7 make/4.4.1"`.
+Override either via environment variable:
 
 ```bash
 MPI_MODULE=openmpi/4.1.6 bash scripts/install-io500.sh
+TOOLCHAIN_MODULES="autoconf/2.71 automake/1.16 libtool/2.4.6 make/4.3" \
+  bash scripts/install-io500.sh
 ```
 
 If you swap MPI stacks, **re-run the install** so IOR is relinked against the
@@ -60,8 +73,9 @@ cd /home/acchapm1/io/io500
 
 - **`mpicc: command not found`** — the module didn't load. Run
   `module load openmpi/5.0.8` manually and confirm with `which mpicc`.
-- **IOR bootstrap fails on autoconf** — older autotools on the head node.
-  Load a newer `autoconf` module before running install.
+- **`autoreconf: ... error: Autoconf version 2.71 or higher is required`** —
+  the toolchain modules didn't load. Confirm `autoconf/2.72` (or your site's
+  equivalent) is in `module avail` output and adjust `TOOLCHAIN_MODULES`.
 - **`prepare.sh` clone fails with SSL** — head node has no internet. Run
   install from a node that does, or pre-populate `io500/build/{ior,pfind,cdcl-schema-tools}`.
 - **Stale build after pulling new io500 commits** — `cd /home/acchapm1/io/io500 && make clean && bash scripts/install-io500.sh`.

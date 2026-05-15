@@ -11,10 +11,16 @@ set -euo pipefail
 
 IO500_DIR="${IO500_DIR:-/home/acchapm1/io/io500}"
 MPI_MODULE="${MPI_MODULE:-openmpi/5.0.8}"
+# IOR's configure.ac requires autoconf >= 2.71; the system autoconf at
+# /usr/bin/autoconf on this cluster is older, so we must load the toolchain
+# modules explicitly (module purge below wipes the user's environment first).
+# Override TOOLCHAIN_MODULES if your site uses different module names.
+TOOLCHAIN_MODULES="${TOOLCHAIN_MODULES:-autoconf/2.72 automake/1.17 libtool/2.4.7 make/4.4.1}"
 
 echo "=== io500 install ==="
-echo "io500 source : $IO500_DIR"
-echo "MPI module   : $MPI_MODULE"
+echo "io500 source     : $IO500_DIR"
+echo "MPI module       : $MPI_MODULE"
+echo "Toolchain modules: $TOOLCHAIN_MODULES"
 echo
 
 if [[ ! -d "$IO500_DIR" ]]; then
@@ -36,14 +42,23 @@ fi
 
 module purge
 module load "$MPI_MODULE"
+# Intentionally unquoted so each whitespace-separated module is a separate arg.
+module load $TOOLCHAIN_MODULES
 module list
 
 if ! command -v mpicc >/dev/null 2>&1; then
   echo "ERROR: mpicc not on PATH after 'module load $MPI_MODULE'" >&2
   exit 1
 fi
-echo "mpicc: $(command -v mpicc)"
+if ! command -v autoreconf >/dev/null 2>&1; then
+  echo "ERROR: autoreconf not on PATH after loading $TOOLCHAIN_MODULES" >&2
+  exit 1
+fi
+ac_ver="$(autoconf --version 2>/dev/null | head -n1)"
+echo "mpicc:      $(command -v mpicc)"
 mpicc --version | head -n1
+echo "autoconf:   $ac_ver"
+echo "autoreconf: $(command -v autoreconf)"
 echo
 
 cd "$IO500_DIR"

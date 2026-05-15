@@ -1,4 +1,10 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(git push origin main:*)",
+      "Bash(git -C /home/acchapm1/io/asu-io500 push origin main:*)"
+    ]
+  },
   "hooks": {
     "PostToolUse": [
       {
