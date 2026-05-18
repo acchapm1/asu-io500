@@ -8,7 +8,7 @@ know what to do when it fails.
 - `module` (Lmod or environment-modules) on PATH
 - The following cluster modules:
   - `openmpi/5.0.8`
-  - `autoconf/2.72` (IOR's `configure.ac` requires autoconf ≥ 2.71; the
+  - `autoconf/2.73` (IOR's `configure.ac` requires autoconf ≥ 2.71; the
     system `/usr/bin/autoconf` is older)
   - `automake/1.17`
   - `libtool/2.4.7`
