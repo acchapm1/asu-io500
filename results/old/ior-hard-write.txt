@@ -1,0 +1,42 @@
+IOR-4.1.0+dev: MPI Coordinated Test of Parallel I/O
+Began               : Fri May 15 14:30:05 2026
+Command line        : ./ior --dataPacketType=timestamp -C -Q 1 -g -G=1836272896 -k -e -o /scratch/acchapm1/io/io500-minimal/2026.05.15-14.14.25/ior-hard/file -O stoneWallingStatusFile=./results/2026.05.15-14.14.25/ior-hard.stonewall -t 47008 -b 47008 -s 10000000 -w -D 300 -a POSIX -O saveRankPerformanceDetailsCSV=./results/2026.05.15-14.14.25/ior-hard-write.csv -O stoneWallingWearOut=1
+Machine             : Linux sc091
+TestID              : 0
+StartTime           : Fri May 15 14:30:05 2026
+Path                : /scratch/acchapm1/io/io500-minimal/2026.05.15-14.14.25/ior-hard/file
+FS                  : 3722.1 TiB   Used FS: 84.2%   Inodes: 0.0 Mi   Used Inodes: -nan%
+
+Options: 
+api                 : POSIX
+apiVersion          : 
+test filename       : /scratch/acchapm1/io/io500-minimal/2026.05.15-14.14.25/ior-hard/file
+access              : single-shared-file
+type                : independent
+segments            : 10000000
+ordering in a file  : sequential
+ordering inter file : constant task offset
+task offset         : 1
+nodes               : 2
+tasks               : 16
+clients per node    : 8
+memoryBuffer        : CPU
+dataAccess          : CPU
+GPUDirect           : 0
+repetitions         : 1
+xfersize            : 47008 bytes
+blocksize           : 47008 bytes
+aggregate filesize  : 6.84 TiB
+stonewallingTime    : 300
+stoneWallingWearOut : 1
+
+Results: 
+
+access    bw(MiB/s)  IOPS       Latency(s)  block(KiB) xfer(KiB)  open(s)    wr/rd(s)   close(s)   total(s)   iter
+------    ---------  ----       ----------  ---------- ---------  --------   --------   --------   --------   ----
+stonewalling pairs accessed min: 140131 max: 415107 -- min data: 6.1 GiB mean data: 11.3 GiB time: 300.0s
+WARNING: Expected aggregate file size       = 7521280000000
+WARNING: Stat() of aggregate file size      = 312213597696
+WARNING: Using actual aggregate bytes moved = 312213597696
+WARNING: Maybe caused by deadlineForStonewalling
+write     145.03     3235.20    0.001998    45.91      45.91      0.044414   2052.95    0.003669   2053.00    0   

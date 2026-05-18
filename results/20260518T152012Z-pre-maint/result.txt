@@ -1,0 +1,118 @@
+[run]
+procs           = 80
+version         = io500-isc26-1-g8863e648cd88
+config-hash     = 630CCAFD
+result-dir      = /scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19
+mode            = standard
+; START 2026-05-18 08:20:20
+
+
+[ior-easy-write]
+t_start         = 2026-05-18 08:20:20
+exe             = ./ior --dataPacketType=timestamp -g -G 1837048640 -k -e -o /scratch/acchapm1/io/io500-bench/2026.05.18-08.20.19/ior-easy/ior_file_easy -C -Q 1 -O stoneWallingStatusFile=/scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/ior-easy.stonewall -t 2m -b 9920000m -F -w -D 300 -O stoneWallingWearOut=1 -a POSIX -O saveRankPerformanceDetailsCSV=/scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/ior-easy-write.csv
+throughput-stonewall = 26.32
+score           = 23.687935
+t_delta         = 739.9050
+t_end           = 2026-05-18 08:32:40
+
+[mdtest-easy-write]
+t_start         = 2026-05-18 08:32:40
+exe             = ./mdtest --dataPacketType=timestamp -n 1000000 -u -L -F -P -G -1571740862 -N 1 -d /scratch/acchapm1/io/io500-bench/2026.05.18-08.20.19/mdtest-easy -x /scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/mdtest-easy.stonewall -C -Y -W 300 --saveRankPerformanceDetails=/scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/mdtest-easy-write.csv -a POSIX
+rate-stonewall  = 56.446768
+score           = 38.139993
+t_delta         = 670.8694
+t_end           = 2026-05-18 08:43:50
+
+[timestamp]
+t_start         = 2026-05-18 08:43:50
+t_delta         = 0.0005
+t_end           = 2026-05-18 08:43:50
+
+[ior-hard-write]
+t_start         = 2026-05-18 08:43:50
+exe             = ./ior --dataPacketType=timestamp -C -Q 1 -g -G=1837059328 -k -e -o /scratch/acchapm1/io/io500-bench/2026.05.18-08.20.19/ior-hard/file -O stoneWallingStatusFile=/scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/ior-hard.stonewall -t 47008 -b 47008 -s 10000000 -w -D 300 -a POSIX -O saveRankPerformanceDetailsCSV=/scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/ior-hard-write.csv -O stoneWallingWearOut=1
+throughput-stonewall = 1.29
+score           = 0.568578
+t_delta         = 812.9560
+t_end           = 2026-05-18 08:57:23
+
+[mdtest-hard-write]
+t_start         = 2026-05-18 08:57:23
+exe             = ./mdtest --dataPacketType=timestamp -n 1000000 -t -w 3901 -e 3901 -P -G=-1571730174 -N 1 -F -d /scratch/acchapm1/io/io500-bench/2026.05.18-08.20.19/mdtest-hard -x /scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/mdtest-hard.stonewall -C -Y -W 300 --saveRankPerformanceDetails=/scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/mdtest-hard-write.csv -a POSIX
+rate-stonewall  = 7.398052
+score           = 7.396336
+t_delta         = 308.2821
+t_end           = 2026-05-18 09:02:32
+
+[find]
+t_start         = 2026-05-18 09:02:32
+exe             = ./pfind /scratch/acchapm1/io/io500-bench/2026.05.18-08.20.19 -newer /scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/timestampfile -size 3901c -name *01* -C -q 10000
+nproc           = 80
+found           = 60880
+total-files     = 27747841
+score           = 719.930943
+t_delta         = 38.5759
+t_end           = 2026-05-18 09:03:10
+
+[ior-easy-read]
+t_start         = 2026-05-18 09:03:10
+exe             = ./ior --dataPacketType=timestamp -g -G 1837048640 -k -e -o /scratch/acchapm1/io/io500-bench/2026.05.18-08.20.19/ior-easy/ior_file_easy -C -Q 1 -O stoneWallingStatusFile=/scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/ior-easy.stonewall -t 2m -b 9920000m -F -r -R -a POSIX -O saveRankPerformanceDetailsCSV=/scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/ior-easy-read.csv
+score           = 21.943803
+t_delta         = 798.0944
+t_end           = 2026-05-18 09:16:28
+
+[mdtest-easy-stat]
+t_start         = 2026-05-18 09:16:28
+exe             = ./mdtest --dataPacketType=timestamp -n 1000000 -u -L -F -P -G -1571740862 -N 1 -d /scratch/acchapm1/io/io500-bench/2026.05.18-08.20.19/mdtest-easy -x /scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/mdtest-easy.stonewall -T --saveRankPerformanceDetails=/scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/mdtest-easy-stat.csv -a POSIX
+score           = 64.363341
+t_delta         = 397.4887
+t_end           = 2026-05-18 09:23:06
+
+[ior-hard-read]
+t_start         = 2026-05-18 09:23:06
+exe             = ./ior --dataPacketType=timestamp -C -Q 1 -g -G=1837059328 -k -e -o /scratch/acchapm1/io/io500-bench/2026.05.18-08.20.19/ior-hard/file -O stoneWallingStatusFile=/scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/ior-hard.stonewall -t 47008 -b 47008 -s 10000000 -r -R -a POSIX -O saveRankPerformanceDetailsCSV=/scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/ior-hard-read.csv
+score           = 1.320218
+t_delta         = 350.1882
+t_end           = 2026-05-18 09:28:56
+
+[mdtest-hard-stat]
+t_start         = 2026-05-18 09:28:56
+exe             = ./mdtest --dataPacketType=timestamp -n 1000000 -t -w 3901 -e 3901 -P -G=-1571730174 -N 1 -F -d /scratch/acchapm1/io/io500-bench/2026.05.18-08.20.19/mdtest-hard -x /scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/mdtest-hard.stonewall -T --saveRankPerformanceDetails=/scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/mdtest-hard-stat.csv -a POSIX
+score           = 48.614078
+t_delta         = 47.7915
+t_end           = 2026-05-18 09:29:44
+
+[mdtest-easy-delete]
+t_start         = 2026-05-18 09:29:44
+exe             = ./mdtest --dataPacketType=timestamp -n 1000000 -u -L -F -P -G -1571740862 -N 1 -d /scratch/acchapm1/io/io500-bench/2026.05.18-08.20.19/mdtest-easy -x /scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/mdtest-easy.stonewall -r --saveRankPerformanceDetails=/scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/mdtest-easy-delete.csv -a POSIX
+score           = 42.882619
+t_delta         = 620.3619
+t_end           = 2026-05-18 09:40:04
+
+[mdtest-hard-read]
+t_start         = 2026-05-18 09:40:04
+exe             = ./mdtest --dataPacketType=timestamp -n 1000000 -t -w 3901 -e 3901 -P -G=-1571730174 -N 1 -F -d /scratch/acchapm1/io/io500-bench/2026.05.18-08.20.19/mdtest-hard -x /scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/mdtest-hard.stonewall -E -X --saveRankPerformanceDetails=/scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/mdtest-hard-read.csv -a POSIX
+score           = 23.889776
+t_delta         = 96.1010
+t_end           = 2026-05-18 09:41:40
+
+[mdtest-hard-delete]
+t_start         = 2026-05-18 09:41:40
+exe             = ./mdtest --dataPacketType=timestamp -n 1000000 -t -w 3901 -e 3901 -P -G=-1571730174 -N 1 -F -d /scratch/acchapm1/io/io500-bench/2026.05.18-08.20.19/mdtest-hard -x /scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/mdtest-hard.stonewall -r --saveRankPerformanceDetails=/scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/mdtest-hard-delete.csv -a POSIX
+score           = 6.610496
+t_delta         = 349.2718
+t_end           = 2026-05-18 09:47:30
+
+[ior-rnd4K-easy-read]
+t_start         = 2026-05-18 09:47:30
+exe             = ./ior --dataPacketType=timestamp -g -G 1837048640 -k -e -o /scratch/acchapm1/io/io500-bench/2026.05.18-08.20.19/ior-easy/ior_file_easy -F -r -D 300 -z -z -a POSIX -O saveRankPerformanceDetailsCSV=/scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/ior-rnd4K-easy-read.csv -t=4096 -b=4096 -s=10000000 -O stoneWallingWearOut=1 -C -Q 2
+score           = 0.020638
+t_delta         = 371.0677
+t_end           = 2026-05-18 09:53:41
+
+[SCORE]
+MD              = 37.951332
+BW              = 4.444457
+SCORE           = 12.987419
+hash            = EBA50B4B
+; END 2026-05-18 09:53:48

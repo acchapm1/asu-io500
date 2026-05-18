@@ -1,0 +1,11 @@
+=== run metadata ===
+timestamp_utc: 20260518T152012Z
+label:         pre-maint
+config:        /home/acchapm1/io/asu-io500/configs/asu-beegfs.ini
+io500_bin:     /home/acchapm1/io/io500/io500
+host:          sc071
+slurm_job_id:  53011530
+slurm_nodelist: sc[071-080]
+slurm_ntasks:  80
+slurm_ntasks_per_node: 8
+slurm_nnodes:  10

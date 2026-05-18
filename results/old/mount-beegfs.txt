@@ -1,0 +1,1 @@
+beegfs_nodev on /scratch type beegfs (rw,nosuid,relatime,cfgFile=/etc/beegfs/beegfs-client.conf,_netdev)

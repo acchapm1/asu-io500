@@ -1,0 +1,2 @@
+Filesystem     Type    Size  Used Avail Use% Mounted on
+beegfs_nodev   beegfs  3.7P  3.2P  529T  86% /scratch

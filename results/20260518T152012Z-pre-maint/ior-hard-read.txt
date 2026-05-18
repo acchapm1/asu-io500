@@ -1,0 +1,38 @@
+IOR-4.1.0+dev: MPI Coordinated Test of Parallel I/O
+Began               : Mon May 18 09:23:06 2026
+Command line        : ./ior --dataPacketType=timestamp -C -Q 1 -g -G=1837059328 -k -e -o /scratch/acchapm1/io/io500-bench/2026.05.18-08.20.19/ior-hard/file -O stoneWallingStatusFile=/scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/ior-hard.stonewall -t 47008 -b 47008 -s 10000000 -r -R -a POSIX -O saveRankPerformanceDetailsCSV=/scratch/acchapm1/io/io500-bench-results/2026.05.18-08.20.19/ior-hard-read.csv
+Machine             : Linux sc071
+TestID              : 0
+StartTime           : Mon May 18 09:23:06 2026
+Path                : /scratch/acchapm1/io/io500-bench/2026.05.18-08.20.19/ior-hard/file
+FS                  : 3722.1 TiB   Used FS: 86.3%   Inodes: 0.0 Mi   Used Inodes: -nan%
+
+Options: 
+api                 : POSIX
+apiVersion          : 
+test filename       : /scratch/acchapm1/io/io500-bench/2026.05.18-08.20.19/ior-hard/file
+access              : single-shared-file
+type                : independent
+segments            : 10000000
+ordering in a file  : sequential
+ordering inter file : constant task offset
+task offset         : 1
+nodes               : 10
+tasks               : 80
+clients per node    : 8
+memoryBuffer        : CPU
+dataAccess          : CPU
+GPUDirect           : 0
+repetitions         : 1
+xfersize            : 47008 bytes
+blocksize           : 47008 bytes
+aggregate filesize  : 34.20 TiB
+
+Results: 
+
+access    bw(MiB/s)  IOPS       Latency(s)  block(KiB) xfer(KiB)  open(s)    wr/rd(s)   close(s)   total(s)   iter
+------    ---------  ----       ----------  ---------- ---------  --------   --------   --------   --------   ----
+WARNING: Expected aggregate file size       = 37606400000000
+WARNING: Stat() of aggregate file size      = 496254054400
+WARNING: Using actual aggregate bytes moved = 496254054400
+read      1351.90    30156      0.002653    45.91      45.91      0.006040   350.07     0.003872   350.07     0   

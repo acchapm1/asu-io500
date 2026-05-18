@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=io500
-#SBATCH --output=%x-%j.out
-#SBATCH --error=%x-%j.err
+#SBATCH --output=logs/%x-%j.out
+#SBATCH --error=logs/%x-%j.err
 #SBATCH --partition=htc
 #SBATCH --qos=public
 #SBATCH --nodes=2
 #SBATCH --ntasks-per-node=8
 #SBATCH -c 2
-#SBATCH --time=01:00:00
+#SBATCH --time=02:00:00
 ##SBATCH --exclusive
 #
 # Usage:
@@ -97,13 +97,28 @@ mpirun -np "$NTASKS" "$IO500_BIN" "$CONFIG_ABS" \
   2> >(tee "$RUN_DIR/io500.stderr" >&2) \
   | tee "$RUN_DIR/io500.stdout"
 
-# Copy io500's results dir (the latest one) into the repo run dir.
-LATEST_RESULT="$(ls -1dt "$IO500_DIR"/results/*/ 2>/dev/null | head -n1 || true)"
-if [[ -n "$LATEST_RESULT" ]]; then
-  cp -r -- "$LATEST_RESULT"/* "$RUN_DIR/"
-  echo "Copied $LATEST_RESULT -> $RUN_DIR/"
+# Copy io500's results dir into the repo run dir. io500 prints its own
+# resultdir near the end of stdout, e.g.:
+#   "The result files are stored in the directory: <path>"
+# Parsing that is the only reliable way, because the config may override
+# `resultdir` (asu-beegfs.ini does); guessing $IO500_DIR/results/ would
+# pick up stale dirs from earlier runs whose configs didn't override it.
+IO500_RESULT_DIR="$(sed -n 's|^The result files are stored in the directory: ||p' \
+                       "$RUN_DIR/io500.stdout" | tail -n1 | tr -d '\r')"
+
+if [[ -z "$IO500_RESULT_DIR" ]]; then
+  # Fallback: io500 didn't print the line (crash, kill, or version skew).
+  # Use the newest dir under $IO500_DIR/results/ as a last-ditch guess and warn.
+  IO500_RESULT_DIR="$(ls -1dt "$IO500_DIR"/results/*/ 2>/dev/null | head -n1 || true)"
+  [[ -n "$IO500_RESULT_DIR" ]] && \
+    echo "WARNING: couldn't parse result-dir from io500 stdout; falling back to $IO500_RESULT_DIR" >&2
+fi
+
+if [[ -n "$IO500_RESULT_DIR" && -d "$IO500_RESULT_DIR" ]]; then
+  cp -rf -- "$IO500_RESULT_DIR"/* "$RUN_DIR/"
+  echo "Copied $IO500_RESULT_DIR -> $RUN_DIR/"
 else
-  echo "WARNING: no results dir found under $IO500_DIR/results" >&2
+  echo "WARNING: no io500 results dir found to copy (looked in stdout and $IO500_DIR/results/)" >&2
 fi
 
 echo

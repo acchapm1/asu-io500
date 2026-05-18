@@ -1,0 +1,47 @@
+# IO500 Run Report — `pre-maint`
+
+| Field | Value |
+|---|---|
+| Benchmark timestamp (UTC) | `20260518T152012Z` |
+| Label | `pre-maint` |
+| Config | `/home/acchapm1/io/asu-io500/configs/asu-beegfs.ini` |
+| Slurm job | `53011530` |
+| Launch host | `sc071` |
+| Nodes | 10 (`sc[071-080]`) |
+| Ranks | 80 (8 per node) |
+
+## Phase Results
+
+| Phase | Score | Time |
+|---|---|---|
+| `ior-easy-write` | 23.687935 GiB/s | 739.905 s |
+| `mdtest-easy-write` | 38.139993 kIOPS | 670.869 s |
+| `ior-hard-write` | 0.568578 GiB/s | 812.956 s |
+| `mdtest-hard-write` | 7.396336 kIOPS | 308.282 s |
+| `find` | 719.930943 kIOPS | 38.576 s |
+| `ior-easy-read` | 21.943803 GiB/s | 798.094 s |
+| `mdtest-easy-stat` | 64.363341 kIOPS | 397.489 s |
+| `ior-hard-read` | 1.320218 GiB/s | 350.188 s |
+| `mdtest-hard-stat` | 48.614078 kIOPS | 47.791 s |
+| `mdtest-easy-delete` | 42.882619 kIOPS | 620.362 s |
+| `mdtest-hard-read` | 23.889776 kIOPS | 96.101 s |
+| `mdtest-hard-delete` | 6.610496 kIOPS | 349.272 s |
+
+**Final:** `[SCORE ] Bandwidth 4.444457 GiB/s : IOPS 37.951332 kiops : TOTAL 12.987419`
+
+## Run Analysis
+
+This run exercised the full IO500 phase set on 10 nodes × 8 ranks = 80 MPI ranks against BeeGFS. The phases split into bandwidth tests (`ior-easy` sequential large transfers, `ior-hard` strided 47008-byte writes, and `ior-rnd4K-easy-read` random 4 KiB reads), metadata tests (`mdtest-easy` with one-file-per-directory and `mdtest-hard` sharing a single directory, in write/stat/read/delete variants), and a `find` phase that walks the tree produced by the prior mdtest runs. The harmonic-mean `TOTAL` of **12.99** combines the bandwidth geomean (**4.44 GiB/s**) and IOPS geomean (**37.95 kIOPS**), and the result is valid — no `[INVALID]` markers, stonewall held at 300 s.
+
+What stands out is how lopsided the bandwidth side is. `ior-easy-write` hit 23.7 GiB/s and `ior-easy-read` 21.9 GiB/s — respectable for 10 BeeGFS clients — but `ior-hard-write` collapsed to **0.57 GiB/s** and `ior-rnd4K-easy-read` to **0.021 GiB/s**. The 47008-byte strided writes and the 4 KiB random reads are both worst-case for BeeGFS's stripe + RDMA path, and they drag the bandwidth geomean down by nearly 6× versus what `ior-easy` alone would suggest. Several phases also ran well past the 300 s stonewall (`ior-easy-write` 740 s, `ior-easy-read` 798 s, `ior-hard-write` 813 s), meaning they hit the configured block/segment ceiling before the timer — i.e., they were *count-limited*, not stonewalled, so the reported rate is below what a longer-running phase could sustain.
+
+Metadata is the other soft spot. `mdtest-easy-write` at 38 kIOPS and `mdtest-easy-delete` at 43 kIOPS are modest for 80 ranks, and `mdtest-hard-write`/`mdtest-hard-delete` (7.4 / 6.6 kIOPS) suggest single-directory contention on the BeeGFS metadata target. `find` at 720 kIOPS is the one clear win — pfind parallelizes well even with `pfind-steal-next=FALSE`. The TOTAL of 12.99 is a reasonable pre-maintenance baseline; the post-maintenance run needs to land within a few percent of this on the same config to call the window a no-regression.
+
+## Suggested Improvements
+
+- **Raise `[ior-easy] blockSize` so the phase stonewalls on time, not bytes.** `ior-easy-write` ran 739.9 s and `ior-easy-read` 798.1 s — both well past the 300 s stonewall, meaning ranks finished their assigned blocks early and the reported 23.7 / 21.9 GiB/s is the *average over the full block*, not the sustained rate at stonewall. The comment in the config claims 9920000m is "way more than any rank will write" — at 23.7 GiB/s × 740 s ÷ 80 ranks ≈ 219 GiB/rank, you're actually exhausting it. Bump to e.g. `blockSize = 30000000m` so the phase ends on the 300 s timer.
+- **Raise `[ior-hard] segmentCount` for the same reason.** `ior-hard-write` ran 813 s at 0.57 GiB/s, which is 10M segments × 47008 B ≈ 438 GiB written across 80 ranks in 813 s — the phase ran out of segments before stonewall. Roughly double `segmentCount` to ~20000000 so the timer, not the count, terminates the phase and the score reflects steady-state throughput.
+- **Investigate the `ior-rnd4K-easy-read` collapse to 0.021 GiB/s (≈ 5400 IOPS aggregate).** That's ~67 IOPS/rank for 4 KiB random reads — far below what BeeGFS storage targets should deliver from page cache or NVMe. Check whether the storage targets are HDD-backed and whether `drop-caches = FALSE` is actually helping here; on a dedicated allocation with cached data, this number should be 10–100× higher. If this is the true cold-cache rate, the bottleneck is storage-target IOPS, not config.
+- **Add BeeGFS metadata targets to relieve the `mdtest-hard` single-directory bottleneck.** `mdtest-hard-write` at 7.4 kIOPS and `mdtest-hard-delete` at 6.6 kIOPS — versus `mdtest-easy-write` at 38 kIOPS — point at a single metadata target serving the shared directory. If the BeeGFS deployment has only one MDT, adding more (and enabling directory striping via `beegfs-ctl --setpattern`) is the single biggest metadata lever. This is a system-level change to raise with the storage admins before the post-maintenance run.
+- **Raise `[mdtest-easy] n` from 1,000,000.** `mdtest-easy-write` consumed 670.9 s (well past stonewall) at 38 kIOPS — at 80 ranks × 1M files that's 80M files written, and the phase clearly stonewalled on the file count rather than time. Bump to `n = 2000000` so the timer dominates and the reported IOPS reflects sustained metadata throughput.
+- **Tune pfind for the hard tree by enabling `pfind-steal-next = TRUE` in the `[find]` section.** `find` already scored 720 kIOPS, but mdtest-hard's flat single-directory layout (and the 96 s `mdtest-hard-read`) means ranks finish their assigned chunks at very different rates; work-stealing typically gives another 1.5–2× on imbalanced trees with negligible downside on the easy tree.
