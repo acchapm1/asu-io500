@@ -8,7 +8,7 @@
 #SBATCH --ntasks-per-node=8
 #SBATCH -c 2
 #SBATCH --time=04:00:00
-##SBATCH --exclusive
+#SBATCH --exclusive
 #SBATCH --reservation=maint
 #
 # Mid-scale io500 benchmark: 10 nodes x 8 ranks/node = 80 ranks against
