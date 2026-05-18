@@ -12,7 +12,12 @@ configs/
   asu-beegfs.ini        # the real pre/post-maintenance benchmark
 scripts/
   install-io500.sh      # one-time build of /home/acchapm1/io/io500
-  run-io500.sbatch      # SLURM submission script
+  run-io500.sbatch      # core SLURM submission script
+  smoke-test.sh         # sbatch wrapper: 2 nodes x 8 ranks, minimal config
+  run-10node.sh         # sbatch wrapper: 10 nodes x 8 ranks, real config
+  run-full-cluster.sh   # sbatch wrapper: full-cluster, real config (edit before first use)
+  cleanup-datadir.sh    # parallel rm -rf of a leftover io500 datadir on BeeGFS
+  generate-report.sh    # build a markdown report (+ AI analysis) for a results dir
 results/                # per-run output, committed to git
 docs/
   install.md            # detailed install walkthrough
@@ -29,25 +34,59 @@ docs/
 # 1. Build io500 + IOR + pfind (once)
 bash scripts/install-io500.sh
 
-# 2. Edit scripts/run-io500.sbatch and uncomment/fill in:
-#      #SBATCH --partition=...
-#      #SBATCH --nodes=...
-#      #SBATCH --ntasks-per-node=...
-#      #SBATCH --time=...
+# 2. Smoke test (2 nodes x 8 ranks, minimal config, ~2h walltime)
+sbatch scripts/smoke-test.sh
 
-# 3. Smoke test
-sbatch scripts/run-io500.sbatch configs/config-minimal.ini pre-maint-smoke
+# 3. Real pre-maintenance run at 10 nodes
+sbatch scripts/run-10node.sh pre-maint
 
-# 4. Real pre-maintenance run
-sbatch scripts/run-io500.sbatch configs/asu-beegfs.ini pre-maint
+# 4. After maintenance, same wrapper with label "post-maint"
+sbatch scripts/run-10node.sh post-maint
 
-# 5. After maintenance, same commands with label "post-maint"
-sbatch scripts/run-io500.sbatch configs/asu-beegfs.ini post-maint
+# 5. Full-cluster run (edit scripts/run-full-cluster.sh first to set
+#    --partition / --nodes / --time / --reservation for your allocation)
+sbatch scripts/run-full-cluster.sh pre-maint
+sbatch scripts/run-full-cluster.sh post-maint
 ```
+
+The wrappers delegate to `scripts/run-io500.sbatch <config> <label>`, which is
+also fine to call directly if you want a one-off node count. `run-io500.sbatch`
+ships with sensible `#SBATCH` defaults (htc / public / 2 nodes / 2h); the
+wrappers override them for their own scale.
 
 Results land under `results/<UTC-timestamp>-<label>/` and include
 `result_summary.txt`, `result.txt`, and a provenance snapshot (module list,
-lscpu, BeeGFS targets, the config used).
+lscpu, BeeGFS targets, the config used). SLURM stdout/stderr go under
+`scripts/logs/`.
+
+## Generating a report
+
+After a run finishes, build a markdown report (header + phase-results table +
+AI-generated analysis and improvement suggestions):
+
+```bash
+scripts/generate-report.sh results/<UTC-timestamp>-<label>
+```
+
+The script writes `report-<timestamp>-<label>.md` into the results dir. The
+analysis section is produced by `claude -p` from `result_summary.txt`,
+`run-metadata.txt`, and `config-used.ini`; if the `claude` CLI is not on PATH,
+those sections are stubbed out for manual completion.
+
+## Cleaning up a datadir
+
+io500 leaves a populated datadir on BeeGFS (default
+`/scratch/acchapm1/io/io500-bench/<benchmark-timestamp>`) that can hold
+millions of files. `scripts/cleanup-datadir.sh` removes one in parallel using
+MPI:
+
+```bash
+sbatch scripts/cleanup-datadir.sh latest                # newest subdir
+sbatch scripts/cleanup-datadir.sh 2026.05.18-15.20.12   # specific subdir
+```
+
+It refuses to touch anything that doesn't live under a `*/io500-*/` tree, as
+a guard against typos in the argument.
 
 ## Auto-push
 
