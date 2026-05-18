@@ -42,15 +42,30 @@ what changed.
 
 ## Override the MPI stack or build toolchain
 
-The script defaults to `MPI_MODULE=openmpi/5.0.8` and
-`TOOLCHAIN_MODULES="autoconf/2.72 automake/1.17 libtool/2.4.7 make/4.4.1"`.
-Override either via environment variable:
+The script's module defaults live at the top of `scripts/install-io500.sh`:
 
-```bash
-MPI_MODULE=openmpi/4.1.6 bash scripts/install-io500.sh
-TOOLCHAIN_MODULES="autoconf/2.71 automake/1.16 libtool/2.4.6 make/4.3" \
-  bash scripts/install-io500.sh
-```
+- `MPI_MODULE` — `scripts/install-io500.sh:13`, default `openmpi/5.0.8`
+- `TOOLCHAIN_MODULES` — `scripts/install-io500.sh:18`, default
+  `autoconf/2.73 automake/1.17 libtool/2.4.7 make/4.4.1`
+- `ACLOCAL_EXTRA_DIR` — `scripts/install-io500.sh:70`, default
+  `/usr/share/aclocal` (where the script looks for `pkg.m4`)
+
+Two ways to change them:
+
+1. **Per-invocation, via environment variable** (no edit; the `${VAR:-default}`
+   form lets you override any of them):
+
+   ```bash
+   MPI_MODULE=openmpi/4.1.6 bash scripts/install-io500.sh
+   TOOLCHAIN_MODULES="autoconf/2.71 automake/1.16 libtool/2.4.6 make/4.3" \
+     bash scripts/install-io500.sh
+   ACLOCAL_EXTRA_DIR=/opt/pkgconfig/share/aclocal bash scripts/install-io500.sh
+   ```
+
+2. **Permanently, by editing the default in the script.** Open
+   `scripts/install-io500.sh` and change the literal after `:-` on the
+   relevant line — e.g. line 13 for MPI, line 18 for the autotools stack.
+   Commit the change so the install is reproducible for the next run.
 
 If you swap MPI stacks, **re-run the install** so IOR is relinked against the
 right MPI; otherwise mpirun will fail at runtime with confusing dlopen errors.
