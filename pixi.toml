@@ -1,0 +1,36 @@
+# Pixi environment for the no-Claude path of scripts/generate-report.sh.
+#
+# When `claude` is not on PATH (or `--no-claude` is passed), the bash report
+# generator dispatches to scripts/generate-report.py for a rule-based analysis
+# section + a matplotlib bar chart of per-phase scores. This file pins the
+# Python/matplotlib stack that script runs against.
+#
+# Usage:
+#   module load pixi/.0.68.1           # ASU cluster only — skip if pixi is already on PATH
+#   pixi install                       # one-time, materializes .pixi/envs/default
+#   pixi run report results/<dir>      # convenience wrapper around generate-report.sh
+#
+# The bash wrapper auto-invokes `pixi run --manifest-path <repo>/pixi.toml python ...`,
+# so direct `pixi install` is only needed once after cloning.
+
+[project]
+name = "asu-io500-report"
+version = "0.1.0"
+description = "Rule-based IO500 report generator (charts + heuristic analysis, no LLM)"
+authors = ["Alan Chapman <brochapman@gmail.com>"]
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[dependencies]
+python = ">=3.11,<3.13"
+matplotlib = ">=3.8"
+
+[tasks]
+# `pixi run report results/<dir>` — generate a report end-to-end. Forwards
+# all args to the bash entry point, which itself dispatches back into this
+# env for the Python pieces.
+report = "bash scripts/generate-report.sh"
+
+# `pixi run report-py results/<dir>` — skip bash entirely and run only the
+# Python analysis (writes to stdout). Useful for debugging the heuristics.
+report-py = "python scripts/generate-report.py"
