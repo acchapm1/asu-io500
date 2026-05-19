@@ -128,6 +128,7 @@ To disable for a session, say "do not push to github" and the assistant will
 - [docs/install.md](docs/install.md)
 - [docs/running.md](docs/running.md)
 - [docs/interpreting-results.md](docs/interpreting-results.md)
+- [docs/REPORTS.md](docs/REPORTS.md)
 
 ## Upstream
 
