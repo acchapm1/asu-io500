@@ -23,6 +23,5 @@ io500-*.err
 # dev stuff
 output.log
 modules
-.claude/*
 .pixi/*
 pixi.lock
