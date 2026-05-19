@@ -11,18 +11,21 @@ configs/
   config-minimal.ini    # smoke test
   asu-beegfs.ini        # the real pre/post-maintenance benchmark
 scripts/
-  install-io500.sh      # one-time build of /home/acchapm1/io/io500
+  install-io500.sh      # one-time build of io500 sibling tree
   run-io500.sbatch      # core SLURM submission script
   smoke-test.sh         # sbatch wrapper: 2 nodes x 8 ranks, minimal config
   run-10node.sh         # sbatch wrapper: 10 nodes x 8 ranks, real config
   run-full-cluster.sh   # sbatch wrapper: full-cluster, real config (edit before first use)
   cleanup-datadir.sh    # parallel rm -rf of a leftover io500 datadir on BeeGFS
-  generate-report.sh    # build a markdown report (+ AI analysis) for a results dir
+  generate-report.sh    # build a markdown report for a results dir (claude or rule-based)
+  generate-report.py    # rule-based fallback for generate-report.sh (no LLM)
+pixi.toml               # python+matplotlib env for the rule-based report generator
 results/                # per-run output, committed to git
 docs/
   install.md            # detailed install walkthrough
   running.md            # how to submit and what gets captured
   interpreting-results.md  # comparing pre vs post
+  REPORTS.md            # end-to-end guide for generate-report.sh
 .claude/
   settings.json         # PostToolUse hook -> auto commit + push
   auto-push.sh          # hook helper (see "Auto-push" below)
