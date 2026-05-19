@@ -262,11 +262,47 @@ resolve_python_cmd() {
   echo "none"
 }
 
+# Materialize the pixi env on first use. Subsequent runs see the env
+# already on disk and skip straight through. `pixi install` is also
+# idempotent if you'd rather always call it, but the explicit check
+# lets us print a "one-time setup" banner only when it's actually true.
+ensure_pixi_env() {
+  local manifest="$1"
+  local repo_root env_dir
+  repo_root="$(dirname -- "$(readlink -f -- "$manifest")")"
+  env_dir="$repo_root/.pixi/envs/default"
+
+  if [[ -d "$env_dir/conda-meta" ]]; then
+    return 0
+  fi
+
+  cat >&2 <<EOF
+
+================================================================
+First-time pixi env setup
+----------------------------------------------------------------
+No .pixi/envs/default found at:
+  $repo_root
+
+Running 'pixi install' to download Python + matplotlib. This is a
+one-time step (typically ~30s on a good network); future runs will
+reuse the env and skip this banner.
+================================================================
+
+EOF
+  if ! pixi install --manifest-path "$manifest" >&2; then
+    echo "ERROR: 'pixi install' failed. Try running it manually from $repo_root." >&2
+    return 1
+  fi
+  echo >&2
+}
+
 run_python_analysis() {
   local cmd
   cmd="$(resolve_python_cmd)"
   case "$cmd" in
     pixi:*)
+      ensure_pixi_env "$PIXI_MANIFEST" || return 1
       echo "Running Python analysis via pixi (manifest: $PIXI_MANIFEST)..." >&2
       pixi run --manifest-path "$PIXI_MANIFEST" \
         python "$PY_SCRIPT" "$DIR" >> "$REPORT"
