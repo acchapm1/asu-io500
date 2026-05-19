@@ -14,10 +14,10 @@
 # so direct `pixi install` is only needed once after cloning.
 
 [workspace]
-name = "asu-io500-report"
+name = "io500-report"
 version = "0.1.0"
 description = "Rule-based IO500 report generator (charts + heuristic analysis, no LLM)"
-authors = ["Alan Chapman <brochapman@gmail.com>"]
+authors = ["Alan Chapman <alan.chapman@asu.edu>"]
 channels = ["conda-forge"]
 platforms = ["linux-64"]
 

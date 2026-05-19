@@ -1,6 +1,0 @@
-
-Currently Loaded Modules:
-  1) openmpi/5.0.8
-
- 
-
