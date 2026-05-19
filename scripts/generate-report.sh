@@ -253,7 +253,11 @@ resolve_python_cmd() {
     fi
   fi
   if command -v python3 >/dev/null 2>&1; then
-    echo "python3"; return
+    # The Python script needs >= 3.7 (uses `from __future__ import annotations`
+    # + dataclasses). RHEL 8 ships 3.6.8 by default, so check before using it.
+    if python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3,7) else 1)' 2>/dev/null; then
+      echo "python3"; return
+    fi
   fi
   echo "none"
 }
