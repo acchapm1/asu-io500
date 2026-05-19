@@ -1,5 +1,10 @@
-# Hook bookkeeping
-.claude/auto-push.log
+# Hook bookkeeping — keep .claude/auto-push.sh + .claude/settings.json
+# tracked so fresh clones get the auto-push hook. Ignore only logs,
+# session transcripts, and any local-only overrides.
+.claude/*.log
+.claude/projects/
+.claude/settings.local.json
+.claude/cache/
 
 # Per-run artifacts we don't want in git
 results/*/raw/
@@ -19,3 +24,5 @@ io500-*.err
 output.log
 modules
 .claude/*
+.pixi/*
+pixi.lock
