@@ -141,30 +141,36 @@ REPORT="$DIR/report-${TS}-${LABEL}.md"
   echo
 } > "$REPORT"
 
-# --- Section 3: AI-generated analysis + suggestions --------------------------
-if ! command -v claude >/dev/null 2>&1; then
-  cat >> "$REPORT" <<'EOF'
-## Run Analysis
+# --- Section 3: analysis + suggestions ---------------------------------------
+# Pick the source for the analysis sections:
+#   * USE_CLAUDE=yes  -> require `claude`, error if missing
+#   * USE_CLAUDE=no   -> always use the Python rule-based path
+#   * USE_CLAUDE=auto -> use `claude` if on PATH, else fall through to Python
 
-_The `claude` CLI was not on PATH when this report was generated. Fill
-this section in manually, or install Claude Code and re-run
-`scripts/generate-report.sh` against this directory._
+have_claude=0
+command -v claude >/dev/null 2>&1 && have_claude=1
 
-## Suggested Improvements
+case "$USE_CLAUDE" in
+  yes)
+    if [[ $have_claude -eq 0 ]]; then
+      echo "ERROR: --with-claude requested but \`claude\` is not on PATH" >&2
+      exit 1
+    fi
+    SOURCE=claude ;;
+  no)
+    SOURCE=python ;;
+  auto)
+    if [[ $have_claude -eq 1 ]]; then SOURCE=claude; else SOURCE=python; fi ;;
+esac
 
-_(See above.)_
-EOF
-  echo "WARNING: claude CLI not found; analysis sections left as stub" >&2
-  echo "Report written: $REPORT"
-  exit 0
-fi
+run_claude_analysis() {
+  # Build the context Claude sees. Keep it bounded -- these files are all
+  # small (~few KB each), so just inline them.
+  local config_used="$DIR/config-used.ini"
+  [[ -f "$config_used" ]] || config_used=/dev/null
 
-# Build the context Claude sees. Keep it bounded -- these files are all
-# small (~few KB each), so just inline them.
-CONFIG_USED="$DIR/config-used.ini"
-[[ -f "$CONFIG_USED" ]] || CONFIG_USED=/dev/null
-
-PROMPT=$(cat <<EOF
+  local prompt
+  prompt=$(cat <<EOF
 You are analyzing a single IO500 benchmark run on the ASU BeeGFS scratch
 array (/scratch/acchapm1/io, 3.7 PB). Below are the result_summary, run
 metadata, and the config used.
@@ -206,14 +212,14 @@ $(cat "$DIR/result_summary.txt")
 $(cat "$DIR/run-metadata.txt")
 
 === config-used.ini ===
-$(cat "$CONFIG_USED")
+$(cat "$config_used")
 EOF
 )
 
-echo "Calling claude -p (this may take ~30-60s)..."
-if ! claude -p "$PROMPT" >> "$REPORT" 2>/tmp/claude-err.$$; then
-  echo "ERROR: claude -p failed; see /tmp/claude-err.$$" >&2
-  cat >> "$REPORT" <<EOF
+  echo "Calling claude -p (this may take ~30-60s)..." >&2
+  if ! claude -p "$prompt" >> "$REPORT" 2>/tmp/claude-err.$$; then
+    echo "ERROR: claude -p failed; see /tmp/claude-err.$$" >&2
+    cat >> "$REPORT" <<EOF
 
 ## Run Analysis
 
@@ -223,6 +229,74 @@ _\`claude -p\` failed during report generation. Fill in manually._
 
 _(See above.)_
 EOF
+    return 1
+  fi
+}
+
+# Pick the Python invocation. Order of preference:
+#   1. pixi already on PATH         -> pixi run --manifest-path ...
+#   2. `module load pixi/.0.68.1`   -> same as above
+#   3. plain python3                -> Python script auto-disables matplotlib
+resolve_python_cmd() {
+  if command -v pixi >/dev/null 2>&1; then
+    echo "pixi:on-path"; return
+  fi
+  # Lmod ships `module` as a shell function, sometimes not exported into
+  # non-interactive shells. Try to source it before attempting `module load`.
+  if ! command -v module >/dev/null 2>&1 && [[ -f /etc/profile.d/lmod.sh ]]; then
+    # shellcheck disable=SC1091
+    source /etc/profile.d/lmod.sh 2>/dev/null || true
+  fi
+  if command -v module >/dev/null 2>&1; then
+    if module load pixi/.0.68.1 2>/dev/null && command -v pixi >/dev/null 2>&1; then
+      echo "pixi:module-loaded"; return
+    fi
+  fi
+  if command -v python3 >/dev/null 2>&1; then
+    echo "python3"; return
+  fi
+  echo "none"
+}
+
+run_python_analysis() {
+  local cmd
+  cmd="$(resolve_python_cmd)"
+  case "$cmd" in
+    pixi:*)
+      echo "Running Python analysis via pixi (manifest: $PIXI_MANIFEST)..." >&2
+      pixi run --manifest-path "$PIXI_MANIFEST" \
+        python "$PY_SCRIPT" "$DIR" >> "$REPORT"
+      ;;
+    python3)
+      echo "WARNING: pixi not available; running with system python3 (charts will be skipped)" >&2
+      python3 "$PY_SCRIPT" "$DIR" >> "$REPORT"
+      ;;
+    *)
+      echo "ERROR: neither pixi nor python3 is available; cannot generate analysis" >&2
+      cat >> "$REPORT" <<'EOF'
+
+## Run Analysis
+
+_Neither `claude` nor a Python interpreter was available when this report
+was generated. Install one of:_
+
+  - _`claude` (Claude Code CLI) — preferred for prose analysis_
+  - _`pixi` + `pixi install` at the repo root — runs the rule-based fallback_
+  - _A system `python3` — runs the rule-based fallback without charts_
+
+## Suggested Improvements
+
+_(See above.)_
+EOF
+      return 1
+      ;;
+  esac
+}
+
+if [[ "$SOURCE" == "claude" ]]; then
+  run_claude_analysis || true
+else
+  run_python_analysis || true
 fi
 
 echo
