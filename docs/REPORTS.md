@@ -68,7 +68,7 @@ env on first use. But running it once interactively makes the first
 report fast instead of slow:
 
 ```bash
-cd /home/acchapm1/io/asu-io500
+cd /path/to/asu-io500
 pixi install            # ~30 s, populates .pixi/envs/default
 ```
 
