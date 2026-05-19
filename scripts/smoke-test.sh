@@ -1,13 +1,16 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #SBATCH --job-name=io500-smoke
-#SBATCH --output=%x-%j.out
-#SBATCH --error=%x-%j.err
+#SBATCH --output=logs/%x-%j.out
+#SBATCH --error=logs/%x-%j.err
 #SBATCH --partition=htc
 #SBATCH --qos=public
 #SBATCH --nodes=2
 #SBATCH --ntasks-per-node=8
 #SBATCH -c 2
 #SBATCH --time=02:00:00
+#SBATCH --reservation=maint
+#SBATCH --exclusive
+
 #
 # Smoke test for the io500 harness. Submit with:
 #
