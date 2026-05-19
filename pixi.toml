@@ -13,7 +13,7 @@
 # The bash wrapper auto-invokes `pixi run --manifest-path <repo>/pixi.toml python ...`,
 # so direct `pixi install` is only needed once after cloning.
 
-[project]
+[workspace]
 name = "asu-io500-report"
 version = "0.1.0"
 description = "Rule-based IO500 report generator (charts + heuristic analysis, no LLM)"
