@@ -25,7 +25,7 @@ docs/
   install.md            # detailed install walkthrough
   running.md            # how to submit and what gets captured
   interpreting-results.md  # comparing pre vs post
-  REPORTS.md            # end-to-end guide for generate-report.sh
+  reports.md            # end-to-end guide for generate-report.sh
 .claude/
   settings.json         # PostToolUse hook -> auto commit + push
   auto-push.sh          # hook helper (see "Auto-push" below)
@@ -90,7 +90,7 @@ The script writes `report-<timestamp>-<label>.md` into the results dir.
   invokes `pixi run …` automatically. Off the cluster: install pixi from
   https://pixi.sh and run `pixi install` at the repo root.
 
-See [docs/REPORTS.md](docs/REPORTS.md) for the full walkthrough including
+See [docs/reports.md](docs/reports.md) for the full walkthrough including
 pixi setup, heuristic details, and troubleshooting.
 
 ## Cleaning up a datadir
@@ -128,7 +128,7 @@ To disable for a session, say "do not push to github" and the assistant will
 - [docs/install.md](docs/install.md)
 - [docs/running.md](docs/running.md)
 - [docs/interpreting-results.md](docs/interpreting-results.md)
-- [docs/REPORTS.md](docs/REPORTS.md)
+- [docs/reports.md](docs/reports.md)
 
 ## Upstream
 
