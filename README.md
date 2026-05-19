@@ -65,16 +65,33 @@ lscpu, BeeGFS targets, the config used). SLURM stdout/stderr go under
 ## Generating a report
 
 After a run finishes, build a markdown report (header + phase-results table +
-AI-generated analysis and improvement suggestions):
+analysis and improvement suggestions):
 
 ```bash
-scripts/generate-report.sh results/<UTC-timestamp>-<label>
+# Default: use claude if available, else fall back to the Python generator.
+bash scripts/generate-report.sh results/<UTC-timestamp>-<label>
+
+# Force the rule-based Python path (no LLM, deterministic):
+bash scripts/generate-report.sh --no-claude results/<UTC-timestamp>-<label>
+
+# Require claude (error if not on PATH):
+bash scripts/generate-report.sh --with-claude results/<UTC-timestamp>-<label>
 ```
 
-The script writes `report-<timestamp>-<label>.md` into the results dir. The
-analysis section is produced by `claude -p` from `result_summary.txt`,
-`run-metadata.txt`, and `config-used.ini`; if the `claude` CLI is not on PATH,
-those sections are stubbed out for manual completion.
+The script writes `report-<timestamp>-<label>.md` into the results dir.
+
+- **Claude path** — analysis prose is produced by `claude -p` from
+  `result_summary.txt`, `run-metadata.txt`, and `config-used.ini`.
+- **Python path** — `scripts/generate-report.py` emits a rule-based analysis,
+  a `phases.png` bar chart, and a cross-run comparison table (when ≥ 2
+  result directories exist). It runs inside the project's pixi env
+  (`pixi.toml` at the repo root). On the ASU Sol cluster:
+  `module load pixi/.0.68.1 && pixi install` once, then the bash wrapper
+  invokes `pixi run …` automatically. Off the cluster: install pixi from
+  https://pixi.sh and run `pixi install` at the repo root.
+
+See [docs/REPORTS.md](docs/REPORTS.md) for the full walkthrough including
+pixi setup, heuristic details, and troubleshooting.
 
 ## Cleaning up a datadir
 
