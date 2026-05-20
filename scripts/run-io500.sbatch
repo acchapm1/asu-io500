@@ -2,10 +2,10 @@
 #SBATCH --job-name=io500
 #SBATCH --output=logs/%x-%j.out
 #SBATCH --error=logs/%x-%j.err
-#SBATCH --partition=htc
-#SBATCH --qos=public
-#SBATCH --nodes=2
-#SBATCH --ntasks-per-node=8
+##SBATCH --partition=htc
+##SBATCH --qos=public
+##SBATCH --nodes=2
+#SBATCH --ntasks-per-node=16
 #SBATCH -c 2
 #SBATCH --time=02:00:00
 ##SBATCH --exclusive
@@ -39,7 +39,7 @@ fi
 REPO_DIR="${REPO_DIR:-/home/acchapm1/io/asu-io500}"
 IO500_DIR="${IO500_DIR:-/home/acchapm1/io/io500}"
 IO500_BIN="$IO500_DIR/io500"
-MPI_MODULE="${MPI_MODULE:-openmpi/5.0.8}"
+MPI_MODULE="${MPI_MODULE:-openmpi/5.0.8-gcc-15.2.0}"
 
 if [[ ! -x "$IO500_BIN" ]]; then
   echo "ERROR: $IO500_BIN not built. Run scripts/install-io500.sh first." >&2
@@ -62,6 +62,25 @@ if ! command -v module >/dev/null 2>&1; then
 fi
 module purge
 module load "$MPI_MODULE"
+
+# openmpi/5.0.8-gcc-15.2.0's libmpi.so.40 has DT_RUNPATH including
+# /packages/apps/hpcx/2.25.1/doca/hcoll/lib. DT_RUNPATH is NOT inherited
+# across NEEDED libs — libhcoll.so.1 resolves via libmpi's RUNPATH, but
+# libhcoll's own NEEDED libocoms.so.0 then can't be found unless that
+# dir is on LD_LIBRARY_PATH. Discover and prepend it dynamically so this
+# adapts to any future MPI module rebuild.
+if command -v mpicc >/dev/null 2>&1 && command -v readelf >/dev/null 2>&1; then
+  _libmpi_dir=$(mpicc --showme:libdirs 2>/dev/null | awk '{print $1}')
+  _libmpi_so=$(ls "$_libmpi_dir"/libmpi.so* 2>/dev/null | head -n1)
+  if [[ -n "$_libmpi_so" ]]; then
+    _rp=$(readelf -d "$_libmpi_so" 2>/dev/null \
+      | awk -F'[][]' '/RUNPATH|RPATH/{print $2; exit}')
+    if [[ -n "$_rp" ]]; then
+      export LD_LIBRARY_PATH="${_rp}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+      echo "libmpi RUNPATH added to LD_LIBRARY_PATH: $_rp"
+    fi
+  fi
+fi
 
 # Provenance snapshot (best-effort).
 {
