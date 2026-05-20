@@ -10,7 +10,7 @@
 set -euo pipefail
 
 IO500_DIR="${IO500_DIR:-/home/acchapm1/io/io500}"
-MPI_MODULE="${MPI_MODULE:-openmpi/5.0.8}"
+MPI_MODULE="${MPI_MODULE:-openmpi/5.0.8-gcc-15.2.0}"
 # IOR's configure.ac requires autoconf >= 2.71; the system autoconf at
 # /usr/bin/autoconf on this cluster is older, so we must load the toolchain
 # modules explicitly (module purge below wipes the user's environment first).
@@ -56,6 +56,24 @@ fi
 # MPI_Init link test fails. Force the MPI wrappers after modules load.
 export CC=mpicc
 export CXX=mpicxx
+# openmpi/5.0.8-gcc-15.2.0's libmpi.so.40 has transitive DT_NEEDED on
+# libhcoll.so.1 (which itself needs libocoms.so.0). Both live under
+# /packages/apps/hpcx/2.25.1/doca/hcoll/lib and are reachable at runtime
+# via libmpi's DT_RUNPATH, but ld's link-time symbol check
+# (--no-allow-shlib-undefined, the default) does NOT traverse a NEEDED
+# lib's RUNPATH, so configure's `mpicc conftest.c` fails. Add libmpi's
+# RUNPATH dirs to LIBRARY_PATH so ld can resolve transitive needs.
+mpicc_libdir=$(mpicc --showme:libdirs 2>/dev/null | awk '{print $1}')
+mpicc_libmpi=$(ls "$mpicc_libdir"/libmpi.so* 2>/dev/null | head -n1)
+if [[ -n "$mpicc_libmpi" ]] && command -v readelf >/dev/null 2>&1; then
+  mpicc_runpath=$(readelf -d "$mpicc_libmpi" 2>/dev/null \
+    | awk -F'[][]' '/RUNPATH|RPATH/{print $2; exit}')
+  if [[ -n "$mpicc_runpath" ]]; then
+    export LIBRARY_PATH="${mpicc_runpath}${LIBRARY_PATH:+:$LIBRARY_PATH}"
+    export LD_LIBRARY_PATH="${mpicc_runpath}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    echo "libmpi RUNPATH added to LIBRARY_PATH: $mpicc_runpath"
+  fi
+fi
 if ! command -v autoreconf >/dev/null 2>&1; then
   echo "ERROR: autoreconf not on PATH after loading $TOOLCHAIN_MODULES" >&2
   exit 1
