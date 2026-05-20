@@ -78,6 +78,18 @@ if [[ -n "$mpicc_libmpi" ]] && command -v readelf >/dev/null 2>&1; then
     export LD_LIBRARY_PATH="${mpicc_runpath}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
     echo "libmpi RUNPATH added to LIBRARY_PATH: $mpicc_runpath"
   fi
+  # Some openmpi modules (bare openmpi/5.0.8) DT_NEED libhcoll/libocoms but
+  # don't put the hpcx dir on libmpi's RUNPATH. Inject the fallback so ld
+  # can resolve them at link time.
+  if readelf -d "$mpicc_libmpi" 2>/dev/null \
+       | grep -qE 'NEEDED.*lib(hcoll|ocoms)' \
+     && [[ -d "$HCOLL_FALLBACK_DIR" ]]; then
+    case ":${LIBRARY_PATH:-}:" in *":$HCOLL_FALLBACK_DIR:"*) :;;
+      *) export LIBRARY_PATH="${HCOLL_FALLBACK_DIR}${LIBRARY_PATH:+:$LIBRARY_PATH}"
+         export LD_LIBRARY_PATH="${HCOLL_FALLBACK_DIR}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+         echo "HCOLL fallback added: $HCOLL_FALLBACK_DIR" ;;
+    esac
+  fi
 fi
 if ! command -v autoreconf >/dev/null 2>&1; then
   echo "ERROR: autoreconf not on PATH after loading $TOOLCHAIN_MODULES" >&2
