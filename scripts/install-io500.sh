@@ -10,7 +10,12 @@
 set -euo pipefail
 
 IO500_DIR="${IO500_DIR:-/home/acchapm1/io/io500}"
-MPI_MODULE="${MPI_MODULE:-openmpi/5.0.8-gcc-15.2.0}"
+MPI_MODULE="${MPI_MODULE:-openmpi/5.0.8}"
+# When libmpi has libhcoll/libocoms in DT_NEEDED but its RUNPATH doesn't
+# cover them (e.g. bare openmpi/5.0.8), fall back to this hpcx dir.
+# Override HCOLL_FALLBACK_DIR to point at a different /packages/apps/hpcx/*
+# build if 2.25.1 is ever removed.
+HCOLL_FALLBACK_DIR="${HCOLL_FALLBACK_DIR:-/packages/apps/hpcx/2.25.1/doca/hcoll/lib}"
 # IOR's configure.ac requires autoconf >= 2.71; the system autoconf at
 # /usr/bin/autoconf on this cluster is older, so we must load the toolchain
 # modules explicitly (module purge below wipes the user's environment first).
