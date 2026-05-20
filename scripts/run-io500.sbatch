@@ -39,7 +39,8 @@ fi
 REPO_DIR="${REPO_DIR:-/home/acchapm1/io/asu-io500}"
 IO500_DIR="${IO500_DIR:-/home/acchapm1/io/io500}"
 IO500_BIN="$IO500_DIR/io500"
-MPI_MODULE="${MPI_MODULE:-openmpi/5.0.8-gcc-15.2.0}"
+MPI_MODULE="${MPI_MODULE:-openmpi/5.0.8}"
+HCOLL_FALLBACK_DIR="${HCOLL_FALLBACK_DIR:-/packages/apps/hpcx/2.25.1/doca/hcoll/lib}"
 
 if [[ ! -x "$IO500_BIN" ]]; then
   echo "ERROR: $IO500_BIN not built. Run scripts/install-io500.sh first." >&2
