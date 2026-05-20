@@ -80,6 +80,16 @@ if command -v mpicc >/dev/null 2>&1 && command -v readelf >/dev/null 2>&1; then
       export LD_LIBRARY_PATH="${_rp}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
       echo "libmpi RUNPATH added to LD_LIBRARY_PATH: $_rp"
     fi
+    # Bare openmpi/5.0.8 DT_NEEDS libhcoll/libocoms but doesn't RUNPATH
+    # to them; inject the hpcx fallback so the binary can dlopen its deps.
+    if readelf -d "$_libmpi_so" 2>/dev/null \
+         | grep -qE 'NEEDED.*lib(hcoll|ocoms)' \
+       && [[ -d "$HCOLL_FALLBACK_DIR" ]]; then
+      case ":${LD_LIBRARY_PATH:-}:" in *":$HCOLL_FALLBACK_DIR:"*) :;;
+        *) export LD_LIBRARY_PATH="${HCOLL_FALLBACK_DIR}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+           echo "HCOLL fallback added to LD_LIBRARY_PATH: $HCOLL_FALLBACK_DIR" ;;
+      esac
+    fi
   fi
 fi
 
