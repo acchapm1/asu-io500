@@ -50,6 +50,12 @@ if ! command -v mpicc >/dev/null 2>&1; then
   echo "ERROR: mpicc not on PATH after 'module load $MPI_MODULE'" >&2
   exit 1
 fi
+# Some compiler modules (e.g. gcc/15.2.0, pulled in by openmpi/5.0.8-gcc-*)
+# set CC=gcc / CXX=g++. IOR's configure uses AX_PROG_CC_MPI which honors
+# $CC, so without overriding we'd build IOR with plain gcc and the
+# MPI_Init link test fails. Force the MPI wrappers after modules load.
+export CC=mpicc
+export CXX=mpicxx
 if ! command -v autoreconf >/dev/null 2>&1; then
   echo "ERROR: autoreconf not on PATH after loading $TOOLCHAIN_MODULES" >&2
   exit 1
